@@ -8,7 +8,22 @@ let categories: Category[] = [...dummyCategories];
 let transactions: TransactionWithCategory[] = [...dummyTransactions];
 let listeners: Listener[] = [];
 
+// Cached snapshots for useSyncExternalStore — must return the same reference
+// across calls unless the underlying data actually changed.
+let categoriesSnapshot: Category[] = [...categories].sort((a, b) =>
+  a.created_at.localeCompare(b.created_at)
+);
+let transactionsSnapshot: TransactionWithCategory[] = [...transactions].sort((a, b) =>
+  b.date.localeCompare(a.date)
+);
+
+function rebuildSnapshots() {
+  categoriesSnapshot = [...categories].sort((a, b) => a.created_at.localeCompare(b.created_at));
+  transactionsSnapshot = [...transactions].sort((a, b) => b.date.localeCompare(a.date));
+}
+
 function notify() {
+  rebuildSnapshots();
   listeners.forEach((l) => l());
 }
 
@@ -31,11 +46,11 @@ export const dummyStore = {
   },
 
   getCategories(): Category[] {
-    return [...categories].sort((a, b) => a.created_at.localeCompare(b.created_at));
+    return categoriesSnapshot;
   },
 
   getTransactions(): TransactionWithCategory[] {
-    return [...transactions].sort((a, b) => b.date.localeCompare(a.date));
+    return transactionsSnapshot;
   },
 
   createCategory(data: Omit<Category, 'id' | 'created_at' | 'updated_at'>): Category {
